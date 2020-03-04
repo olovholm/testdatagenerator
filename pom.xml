@@ -99,7 +99,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>net.lovholm.testdata.controller.Testdatagenerator</mainClass>
+                    <mainClass>net.lovholm.testdata.Testdatagenerator</mainClass>
                     <layout>ZIP</layout>
                     <executable>true</executable>
                     <finalName>application</finalName>

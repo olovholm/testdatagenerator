@@ -1,4 +1,4 @@
-package net.lovholm.testdata.controller
+package net.lovholm.testdata
 
 import org.springframework.boot.SpringApplication.run
 import org.springframework.boot.autoconfigure.SpringBootApplication
