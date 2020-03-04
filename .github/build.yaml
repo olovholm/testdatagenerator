@@ -1,0 +1,68 @@
+name: Bygg og deploy
+
+on:
+  push:
+    branches:
+      - master
+env:
+  IMAGE_BASE: lovholmacr.azurecr.io/testdatagenerator
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 1.11
+      - name: Build artifacts & deploy
+        shell: bash
+        run: |
+          echo "Building artifacts $(echo $GITHUB_SHA | cut -c1-7)"
+          mvn install -e -Pprod -Dchangelist= -Dsha1=-$(git log -1 --pretty='%ad' --date=format:'%Y%m%d%H%M%S')-$(echo $GITHUB_SHA | cut -c1-7) -Dfile.encoding=UTF-8 -DinstallAtEnd=true
+          echo "Installed artifacts"
+          echo ::set-env version=$(git log -1 --pretty='%ad' --date=format:'%Y%m%d%H%M%S')-$(echo $GITHUB_SHA | cut -c1-7)
+          echo ::set-env name=IMAGE::$IMAGE_BASE:$(git log -1 --pretty='%ad' --date=format:'%Y%m%d%H%M%S')-$(echo $GITHUB_SHA | cut -c1-7)
+        env:
+          GITHUB_USERNAME: x-access-token
+          GITHUB_PASSWORD: ${{ secrets.REPO_ACCESS_TOKEN }}
+
+      - name: Bygg og push docker-image til Azure
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_ACCESS_TOKEN }}
+          LOGIN_SERVER: ${{ secrets.CONTAINER_REGRISTRY }}
+          DOCKER_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          echo "Bygger og pusher til Azure"
+          docker login --username ${DOCKER_USERNAME} --password ${DOCKER_PASSWORD} ${LOGIN_SERVER}
+          docker build --pull --tag ${IMAGE} --tag ${IMAGE_BASE}:latest .
+          docker push ${IMAGE}
+          docker push ${IMAGE_BASE}:latest
+      - uses: azure/aks-set-context@v1
+        with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}'
+          cluster-name: ${{ secrets.CLUSTER_NAME }}
+          resource-group: ${{ secrets.CLUSTER_RESOURCE_GROUP }}
+      - uses: azure/k8s-create-secret@v1
+        with:
+          container-registry-url: ${{ secrets.CONTAINER_REGRISTRY }}
+          container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
+          container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+          secret-name: ${{ secrets.CONTAINER_REGRISTRY }}-registry-connection
+      - uses: azure/k8s-deploy@v1
+        with:
+          namespace: 'prod'
+          manifests: |
+            manifests/deployment.yml
+            manifests/service.yml
+          images: |
+            ${{env.IMAGE}}
+          imagepullsecrets: |
+            ${{ secrets.CONTAINER_REGRISTRY }}-registry-connection

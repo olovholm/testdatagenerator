@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: testdatagenerator
+  namespace: prod
+  labels:
+    app: testdatagenerator
+    team: lovholm
+spec:
+  replicas: 1
+  minReadySeconds: 20
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: testdatagenerator
+  template:
+    metadata:
+      labels:
+        app: testdatagenerator
+    spec:
+      containers:
+        - name: testdatagenerator
+          image: lovholmacr.azurecr.io/testdatagenerator
+          ports:
+            - containerPort: 80

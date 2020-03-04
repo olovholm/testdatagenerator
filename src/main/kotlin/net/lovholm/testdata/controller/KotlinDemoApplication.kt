@@ -4,8 +4,8 @@ import org.springframework.boot.SpringApplication.run
 import org.springframework.boot.autoconfigure.SpringBootApplication
 
 @SpringBootApplication
-open class KotlinDemoApplication
+open class Testdatagenerator
 
     fun main(args: Array<String>) {
-        run(KotlinDemoApplication::class.java, *args)
+        run(Testdatagenerator::class.java, *args)
     }
