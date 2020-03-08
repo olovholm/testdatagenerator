@@ -27,3 +27,6 @@ spec:
           image: lovholmacr.azurecr.io/testdatagenerator
           ports:
             - containerPort: 80
+          env:
+            - name: "spring_profiles_active"
+              value: "prod"
