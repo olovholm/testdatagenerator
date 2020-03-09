@@ -1,13 +1,22 @@
 server:
   port: 8044
+
 spring:
   security:
     oauth2:
-      client:
-        registration:
-          springsecurity:
-            clientId: springsecurity-serviceuser
-            clientSecret: 296a234a-94e7-4c48-90aa-37ffbe5d9ab2
-        provider:
-          springsecurity:
-            issuer-uri: http://localhost:8080/auth/realms/lovholm
+        client:
+          registration:
+            springsecurity-serviceuser:
+              grantType: client_credentials
+              authorization-grant-type: client_credentials
+              client-id: springsecurity-serviceuser
+              client-secret: 296a234a-94e7-4c48-90aa-37ffbe5d9ab2
+              provider: keycloak
+          provider:
+            keycloak:
+              issuer-uri: http://localhost:8080/auth/realms/lovholm
+
+
+
+
+resource-base: http://localhost:8033
